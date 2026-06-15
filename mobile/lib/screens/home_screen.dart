@@ -1,7 +1,12 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 
+import '../models/bonus_balance.dart';
+import '../providers/auth_provider.dart';
+import '../services/bonus_service.dart';
 import '../theme/app_colors.dart';
 import '../widgets/menu_item_card.dart';
+import 'login_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -49,8 +54,48 @@ class HomeScreen extends StatelessWidget {
   }
 }
 
-class _TopBar extends StatelessWidget {
+class _TopBar extends StatefulWidget {
   const _TopBar();
+
+  @override
+  State<_TopBar> createState() => _TopBarState();
+}
+
+class _TopBarState extends State<_TopBar> {
+  final _bonusService = BonusService();
+
+  late Future<BonusBalance> _balanceFuture;
+  bool _isRedirecting = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _balanceFuture = _bonusService.getBalance();
+  }
+
+  void _redirectToLogin() {
+    if (_isRedirecting) {
+      return;
+    }
+
+    _isRedirecting = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted) {
+        return;
+      }
+
+      await AuthScope.of(context, listen: false).logout();
+
+      if (!mounted) {
+        return;
+      }
+
+      Navigator.of(context).pushNamedAndRemoveUntil(
+        LoginScreen.routeName,
+        (route) => false,
+      );
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -73,20 +118,24 @@ class _TopBar extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 12),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
-          decoration: BoxDecoration(
-            color: AppColors.accentSoft,
-            borderRadius: BorderRadius.circular(999),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text('0', style: Theme.of(context).textTheme.titleMedium),
-              const SizedBox(width: 4),
-              const Icon(Icons.star_rounded, size: 18, color: AppColors.accent),
-            ],
-          ),
+        FutureBuilder<BonusBalance>(
+          future: _balanceFuture,
+          builder: (context, snapshot) {
+            final error = snapshot.error;
+            if (error is DioException && error.response?.statusCode == 401) {
+              _redirectToLogin();
+            }
+
+            final isLoading = snapshot.connectionState != ConnectionState.done;
+            final hasError = snapshot.hasError &&
+                !(error is DioException && error.response?.statusCode == 401);
+
+            return _HeaderBonusBadge(
+              balance: snapshot.data?.balance,
+              isLoading: isLoading,
+              hasError: hasError,
+            );
+          },
         ),
         const SizedBox(width: 8),
         Container(
@@ -105,6 +154,56 @@ class _TopBar extends StatelessWidget {
         ),
       ],
     );
+  }
+}
+
+class _HeaderBonusBadge extends StatelessWidget {
+  const _HeaderBonusBadge({
+    required this.balance,
+    required this.isLoading,
+    required this.hasError,
+  });
+
+  final double? balance;
+  final bool isLoading;
+  final bool hasError;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      constraints: const BoxConstraints(minWidth: 58),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+      decoration: BoxDecoration(
+        color: AppColors.accentSoft,
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (isLoading)
+            const SizedBox(
+              width: 16,
+              height: 16,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            )
+          else
+            Text(
+              hasError ? '--' : _formatBalance(balance ?? 0),
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+          const SizedBox(width: 4),
+          const Icon(Icons.star_rounded, size: 18, color: AppColors.accent),
+        ],
+      ),
+    );
+  }
+
+  String _formatBalance(double value) {
+    if (value == value.roundToDouble()) {
+      return value.round().toString();
+    }
+
+    return value.toStringAsFixed(2);
   }
 }
 

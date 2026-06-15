@@ -10,6 +10,8 @@ import 'qr_screen.dart';
 class MainShell extends StatefulWidget {
   const MainShell({super.key});
 
+  static const routeName = '/main';
+
   @override
   State<MainShell> createState() => _MainShellState();
 }

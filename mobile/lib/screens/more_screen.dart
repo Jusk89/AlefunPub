@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
+import '../providers/auth_provider.dart';
 import '../theme/app_colors.dart';
+import 'login_screen.dart';
 
 class MoreScreen extends StatelessWidget {
   const MoreScreen({super.key});
@@ -30,7 +32,7 @@ class _MoreTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isLogout = item.title == 'Выйти';
+    final isLogout = item.icon == Icons.logout_rounded;
 
     return Container(
       decoration: BoxDecoration(
@@ -63,8 +65,21 @@ class _MoreTile extends StatelessWidget {
           Icons.chevron_right_rounded,
           color: isLogout ? Colors.red : AppColors.textSecondary,
         ),
-        onTap: () {},
+        onTap: isLogout ? () => _logout(context) : null,
       ),
+    );
+  }
+
+  Future<void> _logout(BuildContext context) async {
+    await AuthScope.of(context, listen: false).logout();
+
+    if (!context.mounted) {
+      return;
+    }
+
+    Navigator.of(context).pushNamedAndRemoveUntil(
+      LoginScreen.routeName,
+      (route) => false,
     );
   }
 }

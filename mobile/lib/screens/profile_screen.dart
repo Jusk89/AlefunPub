@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 
+import '../models/user.dart';
+import '../providers/auth_provider.dart';
 import '../theme/app_colors.dart';
+import 'login_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -10,10 +13,18 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  final TextEditingController _nameController = TextEditingController(text: 'Алексей');
-  final TextEditingController _birthDateController = TextEditingController(text: '28.05.2008');
+  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _birthDateController = TextEditingController();
 
   int _genderIndex = 2;
+  String? _syncedUserSignature;
+  bool _isRedirecting = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _refresh());
+  }
 
   @override
   void dispose() {
@@ -22,64 +33,184 @@ class _ProfileScreenState extends State<ProfileScreen> {
     super.dispose();
   }
 
+  Future<void> _refresh() async {
+    if (!mounted) {
+      return;
+    }
+
+    try {
+      await AuthScope.of(context, listen: false).refreshCurrentUser();
+    } catch (_) {
+      _redirectToLogin();
+    }
+  }
+
+  void _syncControllers(User user) {
+    final birthDate = _formatDate(user.birthDate);
+    final signature = '${user.id}|${user.fullName}|$birthDate';
+    if (_syncedUserSignature == signature) {
+      return;
+    }
+
+    _syncedUserSignature = signature;
+    _nameController.text = user.fullName;
+    _birthDateController.text = birthDate;
+  }
+
+  void _redirectToLogin() {
+    if (_isRedirecting) {
+      return;
+    }
+
+    _isRedirecting = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        return;
+      }
+
+      Navigator.of(context).pushNamedAndRemoveUntil(
+        LoginScreen.routeName,
+        (route) => false,
+      );
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
-    return ListView(
-      padding: const EdgeInsets.fromLTRB(18, 18, 18, 28),
-      children: [
-        Text('Профиль', style: Theme.of(context).textTheme.headlineMedium),
-        const SizedBox(height: 22),
-        const _PhoneCard(phone: '+77785762284'),
-        const SizedBox(height: 18),
-        _ProfileInput(
-          label: 'Имя',
-          controller: _nameController,
-          icon: Icons.person_outline_rounded,
-        ),
-        const SizedBox(height: 18),
-        Text('Пол', style: Theme.of(context).textTheme.labelMedium),
-        const SizedBox(height: 10),
-        _GenderSelector(
-          selectedIndex: _genderIndex,
-          onChanged: (index) => setState(() => _genderIndex = index),
-        ),
-        const SizedBox(height: 18),
-        _ProfileInput(
-          label: 'Дата рождения',
-          controller: _birthDateController,
-          icon: Icons.cake_outlined,
-          keyboardType: TextInputType.datetime,
-        ),
-        const SizedBox(height: 26),
-        FilledButton(
-          onPressed: () {},
-          style: FilledButton.styleFrom(
-            backgroundColor: AppColors.accent,
-            foregroundColor: AppColors.textPrimary,
-            minimumSize: const Size.fromHeight(54),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(18),
+    final authProvider = AuthScope.of(context);
+    final user = authProvider.currentUser;
+
+    if (authProvider.status == AuthStatus.unauthenticated) {
+      _redirectToLogin();
+    }
+
+    if (authProvider.status == AuthStatus.checking && user == null) {
+      return const Center(
+        child: CircularProgressIndicator(color: AppColors.accent),
+      );
+    }
+
+    if (user == null) {
+      return ListView(
+        padding: const EdgeInsets.fromLTRB(18, 18, 18, 28),
+        children: [
+          Text('Профиль', style: Theme.of(context).textTheme.headlineMedium),
+          const SizedBox(height: 22),
+          const _InfoCard(
+            icon: Icons.error_outline_rounded,
+            label: 'Сессия',
+            value: 'Войдите заново',
+          ),
+        ],
+      );
+    }
+
+    _syncControllers(user);
+
+    return RefreshIndicator(
+      color: AppColors.accent,
+      onRefresh: _refresh,
+      child: ListView(
+        padding: const EdgeInsets.fromLTRB(18, 18, 18, 28),
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  'Профиль',
+                  style: Theme.of(context).textTheme.headlineMedium,
+                ),
+              ),
+              if (authProvider.status == AuthStatus.checking)
+                const SizedBox(
+                  width: 22,
+                  height: 22,
+                  child: CircularProgressIndicator(strokeWidth: 2.3),
+                )
+              else
+                IconButton(
+                  onPressed: _refresh,
+                  icon: const Icon(Icons.refresh_rounded),
+                  color: AppColors.textSecondary,
+                  tooltip: 'Обновить',
+                ),
+            ],
+          ),
+          const SizedBox(height: 22),
+          _PhoneCard(phone: user.phone),
+          const SizedBox(height: 18),
+          _ProfileInput(
+            label: 'Имя',
+            controller: _nameController,
+            icon: Icons.person_outline_rounded,
+          ),
+          const SizedBox(height: 18),
+          _InfoCard(
+            icon: Icons.mail_outline_rounded,
+            label: 'Email',
+            value: user.email,
+          ),
+          const SizedBox(height: 18),
+          Text('Пол', style: Theme.of(context).textTheme.labelMedium),
+          const SizedBox(height: 10),
+          _GenderSelector(
+            selectedIndex: _genderIndex,
+            onChanged: (index) => setState(() => _genderIndex = index),
+          ),
+          const SizedBox(height: 18),
+          _ProfileInput(
+            label: 'Дата рождения',
+            controller: _birthDateController,
+            icon: Icons.cake_outlined,
+            keyboardType: TextInputType.datetime,
+          ),
+          const SizedBox(height: 18),
+          _InfoCard(
+            icon: Icons.badge_outlined,
+            label: 'Роль',
+            value: user.role,
+          ),
+          const SizedBox(height: 26),
+          FilledButton(
+            onPressed: () {},
+            style: FilledButton.styleFrom(
+              backgroundColor: AppColors.accent,
+              foregroundColor: AppColors.textPrimary,
+              minimumSize: const Size.fromHeight(54),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(18),
+              ),
+            ),
+            child: const Text(
+              'СОХРАНИТЬ',
+              style: TextStyle(fontWeight: FontWeight.w900),
             ),
           ),
-          child: const Text(
-            'СОХРАНИТЬ',
-            style: TextStyle(fontWeight: FontWeight.w900),
+          const SizedBox(height: 14),
+          TextButton(
+            onPressed: () {},
+            style: TextButton.styleFrom(
+              foregroundColor: Colors.red,
+              minimumSize: const Size.fromHeight(48),
+            ),
+            child: const Text(
+              'УДАЛИТЬ АККАУНТ',
+              style: TextStyle(fontWeight: FontWeight.w800),
+            ),
           ),
-        ),
-        const SizedBox(height: 14),
-        TextButton(
-          onPressed: () {},
-          style: TextButton.styleFrom(
-            foregroundColor: Colors.red,
-            minimumSize: const Size.fromHeight(48),
-          ),
-          child: const Text(
-            'УДАЛИТЬ АККАУНТ',
-            style: TextStyle(fontWeight: FontWeight.w800),
-          ),
-        ),
-      ],
+        ],
+      ),
     );
+  }
+
+  String _formatDate(DateTime? date) {
+    if (date == null) {
+      return '';
+    }
+
+    final day = date.day.toString().padLeft(2, '0');
+    final month = date.month.toString().padLeft(2, '0');
+    return '$day.$month.${date.year}';
   }
 }
 
@@ -114,7 +245,10 @@ class _PhoneCard extends StatelessWidget {
               children: [
                 Text('Телефон', style: Theme.of(context).textTheme.labelMedium),
                 const SizedBox(height: 4),
-                Text(phone, style: Theme.of(context).textTheme.titleMedium),
+                Text(
+                  phone.isEmpty ? 'Не указано' : phone,
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
               ],
             ),
           ),
@@ -155,6 +289,56 @@ class _ProfileInput extends StatelessWidget {
           borderRadius: BorderRadius.circular(18),
           borderSide: const BorderSide(color: AppColors.accent, width: 2),
         ),
+      ),
+    );
+  }
+}
+
+class _InfoCard extends StatelessWidget {
+  const _InfoCard({
+    required this.icon,
+    required this.label,
+    required this.value,
+  });
+
+  final IconData icon;
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.card,
+        borderRadius: BorderRadius.circular(22),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 46,
+            height: 46,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Icon(icon, color: AppColors.textSecondary),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(label, style: Theme.of(context).textTheme.labelMedium),
+                const SizedBox(height: 4),
+                Text(
+                  value.isEmpty ? 'Не указано' : value,
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

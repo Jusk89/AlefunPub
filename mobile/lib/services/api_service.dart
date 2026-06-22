@@ -57,6 +57,36 @@ class ApiService {
     return _dio.post(path, data: data);
   }
 
+  Future<Response<dynamic>> postForm(String path, {required FormData data}) {
+    return _dio.post(
+      path,
+      data: data,
+      options: Options(contentType: 'multipart/form-data'),
+    );
+  }
+
+  Future<Response<dynamic>> patch(String path, {Map<String, dynamic>? data}) {
+    return _dio.patch(path, data: data);
+  }
+
+  Future<Response<dynamic>> delete(String path) {
+    return _dio.delete(path);
+  }
+
+  static String resolveImageUrl(String? imageUrl) {
+    final value = imageUrl?.trim();
+    if (value == null || value.isEmpty) {
+      return '';
+    }
+    if (value.startsWith('http://') || value.startsWith('https://')) {
+      return value;
+    }
+    if (value.startsWith('/')) {
+      return '$baseUrl$value';
+    }
+    return '$baseUrl/$value';
+  }
+
   static Future<void> saveToken(String token) async {
     final preferences = await SharedPreferences.getInstance();
     await preferences.setString(tokenKey, token);

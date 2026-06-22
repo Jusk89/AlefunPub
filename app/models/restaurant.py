@@ -13,7 +13,7 @@ class Restaurant(Base):
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
     logo_url: Mapped[str | None] = mapped_column(String(2048), nullable=True)
-    bonus_percent: Mapped[Decimal] = mapped_column(Numeric(5, 2), default=0, server_default="0", nullable=False)
+    bonus_percent: Mapped[Decimal] = mapped_column(Numeric(5, 2), default=5, server_default="5", nullable=False)
     bonus_expiration_days: Mapped[int] = mapped_column(Integer, default=0, server_default="0", nullable=False)
 
     branches: Mapped[list["Branch"]] = relationship(

@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 
 import '../providers/auth_provider.dart';
 import '../theme/app_colors.dart';
+import 'bonus_history_screen.dart';
 import 'login_screen.dart';
+import 'my_orders_screen.dart';
 
 class MoreScreen extends StatelessWidget {
   const MoreScreen({super.key});
@@ -65,7 +67,7 @@ class _MoreTile extends StatelessWidget {
           Icons.chevron_right_rounded,
           color: isLogout ? Colors.red : AppColors.textSecondary,
         ),
-        onTap: isLogout ? () => _logout(context) : null,
+        onTap: isLogout ? () => _logout(context) : item.onTap(context),
       ),
     );
   }
@@ -85,15 +87,31 @@ class _MoreTile extends StatelessWidget {
 }
 
 class _MoreItem {
-  const _MoreItem(this.title, this.icon);
+  const _MoreItem(this.title, this.icon, {this.routeName});
 
   final String title;
   final IconData icon;
+  final String? routeName;
+
+  VoidCallback? onTap(BuildContext context) {
+    if (routeName == null) {
+      return null;
+    }
+    return () => Navigator.of(context).pushNamed(routeName!);
+  }
 }
 
 const _items = [
-  _MoreItem('История бонусов', Icons.stars_rounded),
-  _MoreItem('Мои заказы', Icons.receipt_long_rounded),
+  _MoreItem(
+    'История бонусов',
+    Icons.stars_rounded,
+    routeName: BonusHistoryScreen.routeName,
+  ),
+  _MoreItem(
+    'Мои заказы',
+    Icons.receipt_long_rounded,
+    routeName: MyOrdersScreen.routeName,
+  ),
   _MoreItem('Адреса доставки', Icons.location_on_rounded),
   _MoreItem('Отзывы', Icons.rate_review_rounded),
   _MoreItem('О ресторане', Icons.info_outline_rounded),

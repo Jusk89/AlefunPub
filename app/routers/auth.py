@@ -1,3 +1,5 @@
+from datetime import datetime, timezone
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
@@ -25,6 +27,9 @@ def issue_token(db: Session, email: str, password: str) -> Token:
         )
 
     access_token = create_access_token(subject=str(user.id))
+    user.last_login_at = datetime.now(timezone.utc)
+    db.commit()
+    db.refresh(user)
     record_visit(db, user.id)
     return Token(access_token=access_token)
 

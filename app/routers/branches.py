@@ -2,8 +2,10 @@ from fastapi import APIRouter, Depends, Response, status
 from sqlalchemy.orm import Session
 
 from app.database import get_db
+from app.dependencies import require_admin_or_owner
 from app.models.branch import Branch
 from app.models.restaurant import Restaurant
+from app.models.user import User
 from app.schemas.branch import BranchCreate, BranchRead, BranchUpdate
 from app.services.crud import create_record, delete_record, get_record_or_404, list_records, update_record
 
@@ -20,7 +22,11 @@ def list_branches(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)
 
 
 @router.post("", response_model=BranchRead, status_code=status.HTTP_201_CREATED)
-def create_branch(payload: BranchCreate, db: Session = Depends(get_db)) -> Branch:
+def create_branch(
+    payload: BranchCreate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_admin_or_owner),
+) -> Branch:
     get_record_or_404(db, Restaurant, payload.restaurant_id, "Restaurant not found")
     return create_record(db, Branch, payload)
 
@@ -31,7 +37,12 @@ def get_branch(branch_id: int, db: Session = Depends(get_db)) -> Branch:
 
 
 @router.patch("/{branch_id}", response_model=BranchRead)
-def update_branch(branch_id: int, payload: BranchUpdate, db: Session = Depends(get_db)) -> Branch:
+def update_branch(
+    branch_id: int,
+    payload: BranchUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_admin_or_owner),
+) -> Branch:
     branch = get_branch_or_404(db, branch_id)
     if payload.restaurant_id is not None:
         get_record_or_404(db, Restaurant, payload.restaurant_id, "Restaurant not found")
@@ -39,7 +50,11 @@ def update_branch(branch_id: int, payload: BranchUpdate, db: Session = Depends(g
 
 
 @router.delete("/{branch_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_branch(branch_id: int, db: Session = Depends(get_db)) -> Response:
+def delete_branch(
+    branch_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_admin_or_owner),
+) -> Response:
     branch = get_branch_or_404(db, branch_id)
     delete_record(db, branch)
     return Response(status_code=status.HTTP_204_NO_CONTENT)

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../services/api_service.dart';
 import '../theme/app_colors.dart';
 
 class MenuItemCard extends StatelessWidget {
@@ -7,12 +8,12 @@ class MenuItemCard extends StatelessWidget {
     super.key,
     required this.name,
     required this.pricePoints,
-    required this.icon,
+    this.imageUrl,
   });
 
   final String name;
-  final int pricePoints;
-  final IconData icon;
+  final double pricePoints;
+  final String? imageUrl;
 
   @override
   Widget build(BuildContext context) {
@@ -24,7 +25,7 @@ class MenuItemCard extends StatelessWidget {
         border: Border.all(color: AppColors.border),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.045),
+            color: Colors.black.withValues(alpha: 0.045),
             blurRadius: 18,
             offset: const Offset(0, 10),
           ),
@@ -33,16 +34,7 @@ class MenuItemCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(
-            child: Container(
-              width: double.infinity,
-              decoration: BoxDecoration(
-                color: AppColors.card,
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Icon(icon, size: 58, color: AppColors.textPrimary),
-            ),
-          ),
+          Expanded(child: _DishImage(imageUrl: imageUrl)),
           const SizedBox(height: 12),
           Text(
             name,
@@ -55,7 +47,7 @@ class MenuItemCard extends StatelessWidget {
             children: [
               Expanded(
                 child: Text(
-                  '$pricePoints баллов',
+                  '${_formatPrice(pricePoints)} баллов',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: Theme.of(context).textTheme.bodyMedium,
@@ -72,7 +64,8 @@ class MenuItemCard extends StatelessWidget {
                   children: [
                     Icon(Icons.star_rounded, size: 16, color: AppColors.accent),
                     SizedBox(width: 3),
-                    Icon(Icons.add_rounded, size: 18, color: AppColors.textPrimary),
+                    Icon(Icons.add_rounded,
+                        size: 18, color: AppColors.textPrimary),
                   ],
                 ),
               ),
@@ -80,6 +73,56 @@ class MenuItemCard extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+
+  String _formatPrice(double value) {
+    if (value == value.roundToDouble()) {
+      return value.round().toString();
+    }
+    return value.toStringAsFixed(2);
+  }
+}
+
+class _DishImage extends StatelessWidget {
+  const _DishImage({required this.imageUrl});
+
+  final String? imageUrl;
+
+  @override
+  Widget build(BuildContext context) {
+    final resolvedUrl = ApiService.resolveImageUrl(imageUrl);
+
+    return Container(
+      width: double.infinity,
+      clipBehavior: Clip.antiAlias,
+      decoration: BoxDecoration(
+        color: AppColors.card,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: resolvedUrl.isEmpty
+          ? const Icon(
+              Icons.restaurant_menu_rounded,
+              size: 58,
+              color: AppColors.textPrimary,
+            )
+          : Image.network(
+              resolvedUrl,
+              fit: BoxFit.cover,
+              loadingBuilder: (context, child, loadingProgress) {
+                if (loadingProgress == null) {
+                  return child;
+                }
+                return const Center(
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                );
+              },
+              errorBuilder: (_, __, ___) => const Icon(
+                Icons.restaurant_menu_rounded,
+                size: 58,
+                color: AppColors.textPrimary,
+              ),
+            ),
     );
   }
 }

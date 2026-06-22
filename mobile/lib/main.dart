@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 
 import 'providers/auth_provider.dart';
+import 'screens/bonus_history_screen.dart';
 import 'screens/login_screen.dart';
 import 'screens/main_shell.dart';
+import 'screens/my_orders_screen.dart';
 import 'screens/register_screen.dart';
+import 'screens/role_router.dart';
 import 'theme/app_colors.dart';
 import 'theme/app_text_styles.dart';
 
@@ -63,6 +66,9 @@ class _LoyaltyAppState extends State<LoyaltyApp> {
           LoginScreen.routeName: (context) => const LoginScreen(),
           RegisterScreen.routeName: (context) => const RegisterScreen(),
           MainShell.routeName: (context) => const MainShell(),
+          RoleRouter.routeName: (context) => const RoleRouter(),
+          BonusHistoryScreen.routeName: (context) => const BonusHistoryScreen(),
+          MyOrdersScreen.routeName: (context) => const MyOrdersScreen(),
         },
       ),
     );
@@ -91,7 +97,7 @@ class _AuthGateState extends State<AuthGate> {
     }
 
     return authProvider.isAuthenticated || authProvider.currentUser != null
-        ? const MainShell()
+        ? const RoleRouter()
         : const LoginScreen();
   }
 }

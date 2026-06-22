@@ -20,6 +20,10 @@ class UserRead(UserBase):
     id: int
     qr_code: str | None
     role: UserRole
+    is_active: bool
+    last_login_at: datetime | None
+    created_by_user_id: int | None
+    branch_id: int | None
     created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)

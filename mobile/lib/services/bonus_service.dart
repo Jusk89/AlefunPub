@@ -1,8 +1,10 @@
 import '../models/bonus_balance.dart';
+import '../models/bonus_transaction.dart';
 import 'api_service.dart';
 
 class BonusService {
-  BonusService({ApiService? apiService}) : _apiService = apiService ?? ApiService();
+  BonusService({ApiService? apiService})
+      : _apiService = apiService ?? ApiService();
 
   // The current backend in this workspace expects restaurant_id.
   // Set RESTAURANT_ID=0 if the deployed backend exposes a user-wide balance.
@@ -26,5 +28,19 @@ class BonusService {
     }
 
     return BonusBalance.fromJson(Map<String, dynamic>.from(data));
+  }
+
+  Future<List<BonusTransaction>> getHistory() async {
+    final response = await _apiService.get('/bonuses/history');
+    final data = response.data;
+    if (data is! List) {
+      throw const FormatException('Invalid bonus history response.');
+    }
+
+    return data
+        .whereType<Map>()
+        .map((item) =>
+            BonusTransaction.fromJson(Map<String, dynamic>.from(item)))
+        .toList();
   }
 }

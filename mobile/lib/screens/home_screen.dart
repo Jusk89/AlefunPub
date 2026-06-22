@@ -2,8 +2,11 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 
 import '../models/bonus_balance.dart';
+import '../models/menu_category.dart';
+import '../models/menu_item.dart';
 import '../providers/auth_provider.dart';
 import '../services/bonus_service.dart';
+import '../services/menu_service.dart';
 import '../theme/app_colors.dart';
 import '../widgets/menu_item_card.dart';
 import 'login_screen.dart';
@@ -17,38 +20,16 @@ class HomeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return ListView(
       padding: const EdgeInsets.fromLTRB(18, 14, 18, 24),
-      children: [
-        const _TopBar(),
-        const SizedBox(height: 18),
-        const _PromoBanner(),
-        const SizedBox(height: 24),
-        Text('Ваш первый подарок', style: Theme.of(context).textTheme.titleLarge),
-        const SizedBox(height: 12),
-        const _GiftCard(),
-        const SizedBox(height: 26),
-        Text('Меню', style: Theme.of(context).textTheme.titleLarge),
-        const SizedBox(height: 14),
-        const _CategoryChips(),
-        const SizedBox(height: 18),
-        GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          itemCount: _menuItems.length,
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 2,
-            crossAxisSpacing: 12,
-            mainAxisSpacing: 12,
-            childAspectRatio: 0.72,
-          ),
-          itemBuilder: (context, index) {
-            final item = _menuItems[index];
-            return MenuItemCard(
-              name: item.name,
-              pricePoints: item.pricePoints,
-              icon: item.icon,
-            );
-          },
-        ),
+      children: const [
+        _TopBar(),
+        SizedBox(height: 18),
+        _PromoBanner(),
+        SizedBox(height: 24),
+        _SectionTitle(title: 'Ваш первый подарок'),
+        SizedBox(height: 12),
+        _GiftCard(),
+        SizedBox(height: 26),
+        _MenuSection(),
       ],
     );
   }
@@ -106,7 +87,8 @@ class _TopBarState extends State<_TopBar> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Alefun Pub', style: Theme.of(context).textTheme.headlineMedium),
+              Text('Alefun Pub',
+                  style: Theme.of(context).textTheme.headlineMedium),
               const SizedBox(height: 4),
               Text(
                 'ул. Братьев Жубановых, 344',
@@ -220,7 +202,7 @@ class _PromoBanner extends StatelessWidget {
         borderRadius: BorderRadius.circular(30),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.14),
+            color: Colors.black.withValues(alpha: 0.14),
             blurRadius: 26,
             offset: const Offset(0, 16),
           ),
@@ -238,7 +220,11 @@ class _PromoBanner extends StatelessWidget {
                 color: AppColors.accent,
                 borderRadius: BorderRadius.circular(90),
               ),
-              child: const Icon(Icons.local_pizza_rounded, size: 92, color: AppColors.textPrimary),
+              child: const Icon(
+                Icons.local_pizza_rounded,
+                size: 92,
+                color: AppColors.textPrimary,
+              ),
             ),
           ),
           Positioned(
@@ -248,24 +234,27 @@ class _PromoBanner extends StatelessWidget {
               width: 110,
               height: 110,
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.12),
+                color: Colors.white.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(34),
               ),
-              child: const Icon(Icons.sports_bar_rounded, size: 62, color: Colors.white),
+              child: const Icon(Icons.sports_bar_rounded,
+                  size: 62, color: Colors.white),
             ),
           ),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.12),
+                  color: Colors.white.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(999),
                 ),
                 child: const Text(
                   'Новое меню',
-                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
+                  style: TextStyle(
+                      color: Colors.white, fontWeight: FontWeight.w700),
                 ),
               ),
               const Spacer(),
@@ -282,7 +271,7 @@ class _PromoBanner extends StatelessWidget {
               Text(
                 'Закуски, напитки и горячие блюда для компании',
                 style: TextStyle(
-                  color: Colors.white.withOpacity(0.78),
+                  color: Colors.white.withValues(alpha: 0.78),
                   fontSize: 15,
                   fontWeight: FontWeight.w500,
                 ),
@@ -308,7 +297,7 @@ class _GiftCard extends StatelessWidget {
         border: Border.all(color: AppColors.border),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 18,
             offset: const Offset(0, 10),
           ),
@@ -323,28 +312,185 @@ class _GiftCard extends StatelessWidget {
               color: AppColors.accentSoft,
               borderRadius: BorderRadius.circular(22),
             ),
-            child: const Icon(Icons.card_giftcard_rounded, color: AppColors.textPrimary, size: 34),
+            child: const Icon(
+              Icons.card_giftcard_rounded,
+              color: AppColors.textPrimary,
+              size: 34,
+            ),
           ),
           const SizedBox(width: 14),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Добро пожаловать', style: Theme.of(context).textTheme.titleMedium),
+                Text('Добро пожаловать',
+                    style: Theme.of(context).textTheme.titleMedium),
                 const SizedBox(height: 5),
-                Text('Получите подарок после первого заказа', style: Theme.of(context).textTheme.bodyMedium),
+                Text(
+                  'Получите подарок после первого заказа',
+                  style: Theme.of(context).textTheme.bodyMedium,
+                ),
               ],
             ),
           ),
-          const Icon(Icons.chevron_right_rounded, color: AppColors.textSecondary),
+          const Icon(Icons.chevron_right_rounded,
+              color: AppColors.textSecondary),
         ],
       ),
     );
   }
 }
 
+class _SectionTitle extends StatelessWidget {
+  const _SectionTitle({required this.title});
+
+  final String title;
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(title, style: Theme.of(context).textTheme.titleLarge);
+  }
+}
+
+class _MenuSection extends StatefulWidget {
+  const _MenuSection();
+
+  @override
+  State<_MenuSection> createState() => _MenuSectionState();
+}
+
+class _MenuSectionState extends State<_MenuSection> {
+  final _menuService = MenuService();
+
+  List<MenuCategory> _categories = [];
+  List<MenuItem> _items = [];
+  int? _selectedCategoryId;
+  bool _isLoading = true;
+  String? _errorMessage;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadMenu();
+  }
+
+  Future<void> _loadMenu() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final categories = await _menuService.getCategories();
+      final activeCategories = categories
+          .where((category) => category.isActive)
+          .toList()
+        ..sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
+
+      final selectedCategoryId = _selectedCategoryId ??
+          (activeCategories.isNotEmpty ? activeCategories.first.id : null);
+      final items = selectedCategoryId == null
+          ? <MenuItem>[]
+          : await _menuService.getItemsByCategory(selectedCategoryId);
+
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        _categories = activeCategories;
+        _selectedCategoryId = selectedCategoryId;
+        _items = items;
+      });
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+      if (error is DioException && error.response?.statusCode == 401) {
+        await AuthScope.of(context, listen: false).logout();
+        if (!mounted) {
+          return;
+        }
+        Navigator.of(context).pushNamedAndRemoveUntil(
+          LoginScreen.routeName,
+          (route) => false,
+        );
+        return;
+      }
+      setState(() => _errorMessage = 'Не удалось загрузить меню');
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  Future<void> _selectCategory(MenuCategory category) async {
+    if (_selectedCategoryId == category.id) {
+      return;
+    }
+
+    setState(() {
+      _selectedCategoryId = category.id;
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final items = await _menuService.getItemsByCategory(category.id);
+      if (!mounted) {
+        return;
+      }
+      setState(() => _items = items);
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+      setState(() => _errorMessage = 'Не удалось загрузить блюда');
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const _SectionTitle(title: 'Меню'),
+        const SizedBox(height: 14),
+        if (_categories.isNotEmpty)
+          _CategoryChips(
+            categories: _categories,
+            selectedCategoryId: _selectedCategoryId,
+            onSelected: _selectCategory,
+          ),
+        if (_categories.isNotEmpty) const SizedBox(height: 18),
+        if (_isLoading)
+          const _MenuLoading()
+        else if (_errorMessage != null)
+          _MenuError(message: _errorMessage!, onRetry: _loadMenu)
+        else if (_categories.isEmpty || _items.isEmpty)
+          const _MenuEmpty()
+        else
+          _MenuGrid(items: _items),
+      ],
+    );
+  }
+}
+
 class _CategoryChips extends StatelessWidget {
-  const _CategoryChips();
+  const _CategoryChips({
+    required this.categories,
+    required this.selectedCategoryId,
+    required this.onSelected,
+  });
+
+  final List<MenuCategory> categories;
+  final int? selectedCategoryId;
+  final ValueChanged<MenuCategory> onSelected;
 
   @override
   Widget build(BuildContext context) {
@@ -352,23 +498,30 @@ class _CategoryChips extends StatelessWidget {
       height: 42,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
-        itemCount: _categories.length,
+        itemCount: categories.length,
         separatorBuilder: (_, __) => const SizedBox(width: 8),
         itemBuilder: (context, index) {
-          final selected = index == 0;
-          return Container(
-            padding: const EdgeInsets.symmetric(horizontal: 15),
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              color: selected ? AppColors.accent : AppColors.card,
-              borderRadius: BorderRadius.circular(999),
-              border: Border.all(color: selected ? AppColors.accent : AppColors.border),
-            ),
-            child: Text(
-              _categories[index],
-              style: TextStyle(
-                color: AppColors.textPrimary,
-                fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
+          final category = categories[index];
+          final selected = category.id == selectedCategoryId;
+          return InkWell(
+            onTap: () => onSelected(category),
+            borderRadius: BorderRadius.circular(999),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 15),
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: selected ? AppColors.accent : AppColors.card,
+                borderRadius: BorderRadius.circular(999),
+                border: Border.all(
+                  color: selected ? AppColors.accent : AppColors.border,
+                ),
+              ),
+              child: Text(
+                category.name,
+                style: TextStyle(
+                  color: AppColors.textPrimary,
+                  fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
+                ),
               ),
             ),
           );
@@ -378,31 +531,105 @@ class _CategoryChips extends StatelessWidget {
   }
 }
 
-class _MenuMock {
-  const _MenuMock({
-    required this.name,
-    required this.pricePoints,
-    required this.icon,
-  });
+class _MenuGrid extends StatelessWidget {
+  const _MenuGrid({required this.items});
 
-  final String name;
-  final int pricePoints;
-  final IconData icon;
+  final List<MenuItem> items;
+
+  @override
+  Widget build(BuildContext context) {
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: items.length,
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        crossAxisSpacing: 12,
+        mainAxisSpacing: 12,
+        childAspectRatio: 0.72,
+      ),
+      itemBuilder: (context, index) {
+        final item = items[index];
+        return MenuItemCard(
+          name: item.name,
+          pricePoints: item.price,
+          imageUrl: item.imageUrl,
+        );
+      },
+    );
+  }
 }
 
-const _categories = [
-  'Наборы в стол',
-  'Закуски',
-  'Салаты',
-  'Напитки',
-  'Десерты',
-];
+class _MenuLoading extends StatelessWidget {
+  const _MenuLoading();
 
-const _menuItems = [
-  _MenuMock(name: 'Сет к пиву', pricePoints: 3200, icon: Icons.tapas_rounded),
-  _MenuMock(name: 'Крылья BBQ', pricePoints: 2600, icon: Icons.set_meal_rounded),
-  _MenuMock(name: 'Цезарь', pricePoints: 2400, icon: Icons.eco_rounded),
-  _MenuMock(name: 'Брускетты', pricePoints: 2100, icon: Icons.bakery_dining_rounded),
-  _MenuMock(name: 'Лимонад', pricePoints: 1100, icon: Icons.local_drink_rounded),
-  _MenuMock(name: 'Чизкейк', pricePoints: 1500, icon: Icons.cake_rounded),
-];
+  @override
+  Widget build(BuildContext context) {
+    return const Padding(
+      padding: EdgeInsets.symmetric(vertical: 42),
+      child: Center(child: CircularProgressIndicator(color: AppColors.accent)),
+    );
+  }
+}
+
+class _MenuError extends StatelessWidget {
+  const _MenuError({
+    required this.message,
+    required this.onRetry,
+  });
+
+  final String message;
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: AppColors.card,
+        borderRadius: BorderRadius.circular(22),
+      ),
+      child: Column(
+        children: [
+          const Icon(Icons.wifi_off_rounded,
+              size: 40, color: AppColors.textSecondary),
+          const SizedBox(height: 10),
+          Text(message, textAlign: TextAlign.center),
+          const SizedBox(height: 14),
+          FilledButton(
+            onPressed: onRetry,
+            style: FilledButton.styleFrom(
+              backgroundColor: AppColors.accent,
+              foregroundColor: AppColors.textPrimary,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16)),
+            ),
+            child: const Text('Повторить'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _MenuEmpty extends StatelessWidget {
+  const _MenuEmpty();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(22),
+      decoration: BoxDecoration(
+        color: AppColors.card,
+        borderRadius: BorderRadius.circular(22),
+      ),
+      child: const Text(
+        'Меню пусто',
+        textAlign: TextAlign.center,
+        style: TextStyle(fontWeight: FontWeight.w700),
+      ),
+    );
+  }
+}

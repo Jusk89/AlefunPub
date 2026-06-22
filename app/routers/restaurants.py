@@ -2,7 +2,9 @@ from fastapi import APIRouter, Depends, Response, status
 from sqlalchemy.orm import Session
 
 from app.database import get_db
+from app.dependencies import require_admin_or_owner
 from app.models.restaurant import Restaurant
+from app.models.user import User
 from app.schemas.restaurant import RestaurantCreate, RestaurantRead, RestaurantUpdate
 from app.services.crud import create_record, delete_record, get_record_or_404, list_records, update_record
 
@@ -23,7 +25,11 @@ def list_restaurants(
 
 
 @router.post("", response_model=RestaurantRead, status_code=status.HTTP_201_CREATED)
-def create_restaurant(payload: RestaurantCreate, db: Session = Depends(get_db)) -> Restaurant:
+def create_restaurant(
+    payload: RestaurantCreate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_admin_or_owner),
+) -> Restaurant:
     return create_record(db, Restaurant, payload)
 
 
@@ -37,13 +43,18 @@ def update_restaurant(
     restaurant_id: int,
     payload: RestaurantUpdate,
     db: Session = Depends(get_db),
+    current_user: User = Depends(require_admin_or_owner),
 ) -> Restaurant:
     restaurant = get_restaurant_or_404(db, restaurant_id)
     return update_record(db, restaurant, payload)
 
 
 @router.delete("/{restaurant_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_restaurant(restaurant_id: int, db: Session = Depends(get_db)) -> Response:
+def delete_restaurant(
+    restaurant_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_admin_or_owner),
+) -> Response:
     restaurant = get_restaurant_or_404(db, restaurant_id)
     delete_record(db, restaurant)
     return Response(status_code=status.HTTP_204_NO_CONTENT)

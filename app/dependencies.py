@@ -38,6 +38,11 @@ def get_current_user(
     user = get_user_by_id(db, user_id)
     if user is None:
         raise credentials_exception
+    if not user.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="User account is inactive",
+        )
 
     return user
 
@@ -55,9 +60,19 @@ def require_roles(current_user: User, allowed_roles: set[UserRole]) -> User:
 
 def require_staff_user(current_user: User = Depends(get_current_user)) -> User:
     """Allow back-office users that can manage operational data."""
-    return require_roles(current_user, {UserRole.admin, UserRole.cashier})
+    return require_roles(current_user, {UserRole.owner, UserRole.admin, UserRole.cashier})
 
 
 def require_cashier_or_admin(current_user: User = Depends(get_current_user)) -> User:
     """Allow users who can operate cashier-facing QR and payment flows."""
-    return require_roles(current_user, {UserRole.admin, UserRole.cashier})
+    return require_roles(current_user, {UserRole.owner, UserRole.admin, UserRole.cashier})
+
+
+def require_admin_or_owner(current_user: User = Depends(get_current_user)) -> User:
+    """Allow management users for menu, campaign, and staff administration."""
+    return require_roles(current_user, {UserRole.owner, UserRole.admin})
+
+
+def require_owner(current_user: User = Depends(get_current_user)) -> User:
+    """Allow only the owner role."""
+    return require_roles(current_user, {UserRole.owner})

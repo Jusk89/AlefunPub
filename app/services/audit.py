@@ -23,7 +23,7 @@ class AuditService:
         """Persist one audit log record."""
         log = AuditLog(
             action=action,
-            actor_user_id=actor_user_id,
+            user_id=actor_user_id,
             entity_type=entity_type,
             entity_id=entity_id,
             details=details,

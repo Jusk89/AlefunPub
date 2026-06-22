@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 
 import '../providers/auth_provider.dart';
 import '../theme/app_colors.dart';
-import 'main_shell.dart';
 import 'register_screen.dart';
+import 'role_router.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -52,7 +52,7 @@ class _LoginScreenState extends State<LoginScreen> {
       }
 
       Navigator.of(context).pushNamedAndRemoveUntil(
-        MainShell.routeName,
+        RoleRouter.routeName,
         (route) => false,
       );
     } catch (error) {

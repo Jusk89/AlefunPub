@@ -10,6 +10,8 @@ def authenticate_user(db: Session, identifier: str, password: str) -> User | Non
     user = get_user_by_email(db, identifier) or get_user_by_phone(db, identifier)
     if user is None:
         return None
+    if not user.is_active:
+        return None
     if not verify_password(password, user.password_hash):
         return None
     return user

@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../providers/auth_provider.dart';
 import '../theme/app_colors.dart';
-import 'main_shell.dart';
+import 'role_router.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -61,7 +61,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
       if (loggedIn) {
         Navigator.of(context).pushNamedAndRemoveUntil(
-          MainShell.routeName,
+          RoleRouter.routeName,
           (route) => false,
         );
         return;

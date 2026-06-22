@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.dependencies import get_current_user, require_staff_user
+from app.dependencies import get_current_user, require_admin_or_owner
 from app.models.user import User
 from app.schemas.bonus import (
     BonusBalanceRead,
@@ -79,7 +79,7 @@ def spend_bonuses(
         raise_http_error(error)
 
 
-@router.post("/manual", response_model=BonusTransactionRead, dependencies=[Depends(require_staff_user)])
+@router.post("/manual", response_model=BonusTransactionRead, dependencies=[Depends(require_admin_or_owner)])
 def create_manual_bonus(
     payload: BonusManualRequest,
     service: BonusService = Depends(bonus_service),
@@ -97,7 +97,7 @@ def create_manual_bonus(
         raise_http_error(error)
 
 
-@router.post("/expire-old", response_model=BonusExpireOldResponse, dependencies=[Depends(require_staff_user)])
+@router.post("/expire-old", response_model=BonusExpireOldResponse, dependencies=[Depends(require_admin_or_owner)])
 def expire_old_bonuses(
     payload: BonusExpireOldRequest,
     service: BonusService = Depends(bonus_service),

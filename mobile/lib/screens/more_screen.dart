@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../providers/auth_provider.dart';
 import '../theme/app_colors.dart';
+import 'about_restaurant_screen.dart';
 import 'bonus_history_screen.dart';
 import 'login_screen.dart';
 import 'my_orders_screen.dart';
@@ -87,18 +89,134 @@ class _MoreTile extends StatelessWidget {
 }
 
 class _MoreItem {
-  const _MoreItem(this.title, this.icon, {this.routeName});
+  const _MoreItem(
+    this.title,
+    this.icon, {
+    this.routeName,
+    this.message,
+    this.externalUrl,
+    this.screen,
+    this.whatsAppPhones,
+  });
 
   final String title;
   final IconData icon;
   final String? routeName;
+  final String? message;
+  final String? externalUrl;
+  final Widget? screen;
+  final List<_WhatsAppPhone>? whatsAppPhones;
 
   VoidCallback? onTap(BuildContext context) {
+    if (message != null) {
+      return () {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(message!)),
+        );
+      };
+    }
+    if (whatsAppPhones != null) {
+      return () => _showWhatsAppPhones(context, whatsAppPhones!);
+    }
+    if (externalUrl != null) {
+      return () => _openExternalUrl(context, externalUrl!);
+    }
+    if (screen != null) {
+      return () {
+        Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => screen!),
+        );
+      };
+    }
     if (routeName == null) {
       return null;
     }
     return () => Navigator.of(context).pushNamed(routeName!);
   }
+
+  void _showWhatsAppPhones(
+    BuildContext context,
+    List<_WhatsAppPhone> phones,
+  ) {
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(26)),
+      ),
+      builder: (sheetContext) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(18, 14, 18, 18),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Написать в WhatsApp',
+                  style: Theme.of(sheetContext).textTheme.titleLarge,
+                ),
+                const SizedBox(height: 12),
+                ...phones.map(
+                  (phone) => Padding(
+                    padding: const EdgeInsets.only(bottom: 10),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: AppColors.card,
+                        borderRadius: BorderRadius.circular(18),
+                      ),
+                      child: ListTile(
+                        leading: const Icon(
+                          Icons.chat_rounded,
+                          color: AppColors.textSecondary,
+                        ),
+                        title: Text(phone.label),
+                        trailing: const Icon(Icons.open_in_new_rounded),
+                        onTap: () {
+                          Navigator.of(sheetContext).pop();
+                          _openWhatsApp(context, phone.digits);
+                        },
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _openWhatsApp(BuildContext context, String phoneDigits) async {
+    final uri = Uri.parse('https://wa.me/$phoneDigits');
+    final opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
+    if (!opened && context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Не удалось открыть WhatsApp')),
+      );
+    }
+  }
+
+  Future<void> _openExternalUrl(BuildContext context, String value) async {
+    final uri = Uri.parse(value);
+    final opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
+    if (!opened && context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Не удалось открыть ссылку')),
+      );
+    }
+  }
+}
+
+class _WhatsAppPhone {
+  const _WhatsAppPhone({
+    required this.label,
+    required this.digits,
+  });
+
+  final String label;
+  final String digits;
 }
 
 const _items = [
@@ -112,9 +230,28 @@ const _items = [
     Icons.receipt_long_rounded,
     routeName: MyOrdersScreen.routeName,
   ),
-  _MoreItem('Адреса доставки', Icons.location_on_rounded),
-  _MoreItem('Отзывы', Icons.rate_review_rounded),
-  _MoreItem('О ресторане', Icons.info_outline_rounded),
-  _MoreItem('Поддержка', Icons.support_agent_rounded),
+  _MoreItem(
+    'Адреса доставки',
+    Icons.location_on_rounded,
+    message: 'Страница в разработке',
+  ),
+  _MoreItem(
+    'Отзывы',
+    Icons.rate_review_rounded,
+    externalUrl: 'https://2gis.kz/aktobe/geo/70000001032277594',
+  ),
+  _MoreItem(
+    'О ресторане',
+    Icons.info_outline_rounded,
+    screen: AboutRestaurantScreen(),
+  ),
+  _MoreItem(
+    'Поддержка',
+    Icons.support_agent_rounded,
+    whatsAppPhones: [
+      _WhatsAppPhone(label: '+7 775 991 78 68', digits: '77759917868'),
+      _WhatsAppPhone(label: '+7 747 748 00 01', digits: '77477480001'),
+    ],
+  ),
   _MoreItem('Выйти', Icons.logout_rounded),
 ];

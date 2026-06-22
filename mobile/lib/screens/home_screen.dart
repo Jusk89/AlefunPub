@@ -197,9 +197,13 @@ class _PromoBanner extends StatelessWidget {
     return Container(
       height: 360,
       padding: const EdgeInsets.all(22),
+      clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
-        color: AppColors.textPrimary,
         borderRadius: BorderRadius.circular(30),
+        image: const DecorationImage(
+          image: AssetImage('assets/images/alefun_pub_banner.jpeg'),
+          fit: BoxFit.cover,
+        ),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.14),
@@ -210,53 +214,23 @@ class _PromoBanner extends StatelessWidget {
       ),
       child: Stack(
         children: [
-          Positioned(
-            right: -14,
-            top: 24,
-            child: Container(
-              width: 170,
-              height: 170,
+          Positioned.fill(
+            child: DecoratedBox(
               decoration: BoxDecoration(
-                color: AppColors.accent,
-                borderRadius: BorderRadius.circular(90),
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.black.withValues(alpha: 0.12),
+                    Colors.black.withValues(alpha: 0.68),
+                  ],
+                ),
               ),
-              child: const Icon(
-                Icons.local_pizza_rounded,
-                size: 92,
-                color: AppColors.textPrimary,
-              ),
-            ),
-          ),
-          Positioned(
-            right: 42,
-            bottom: 16,
-            child: Container(
-              width: 110,
-              height: 110,
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(34),
-              ),
-              child: const Icon(Icons.sports_bar_rounded,
-                  size: 62, color: Colors.white),
             ),
           ),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(999),
-                ),
-                child: const Text(
-                  'Новое меню',
-                  style: TextStyle(
-                      color: Colors.white, fontWeight: FontWeight.w700),
-                ),
-              ),
               const Spacer(),
               const Text(
                 'Соберите\nвечер в Alefun',

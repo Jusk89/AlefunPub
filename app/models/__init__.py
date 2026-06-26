@@ -5,6 +5,7 @@ from app.models.bonus import BonusAccount, BonusTransaction
 from app.models.branch import Branch
 from app.models.campaign import Campaign
 from app.models.delivery import DeliveryOrder
+from app.models.gift import Gift, GiftRedemption
 from app.models.menu import MenuCategory, MenuItem
 from app.models.notification import PushToken
 from app.models.order import Order, OrderItem
@@ -19,6 +20,8 @@ __all__ = [
     "Branch",
     "Campaign",
     "DeliveryOrder",
+    "Gift",
+    "GiftRedemption",
     "MenuCategory",
     "MenuItem",
     "Order",

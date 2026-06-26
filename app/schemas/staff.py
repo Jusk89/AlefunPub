@@ -1,8 +1,9 @@
 from datetime import datetime
 
-from pydantic import BaseModel, ConfigDict, EmailStr, Field
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
 
 from app.models.user import UserRole
+from app.schemas.text import normalize_unicode_text
 
 
 class StaffCreate(BaseModel):
@@ -13,6 +14,8 @@ class StaffCreate(BaseModel):
     role: UserRole
     branch_id: int | None = None
 
+    _normalize_text = field_validator("full_name", mode="before")(normalize_unicode_text)
+
 
 class StaffUpdate(BaseModel):
     full_name: str | None = Field(default=None, min_length=2, max_length=255)
@@ -21,6 +24,8 @@ class StaffUpdate(BaseModel):
     password: str | None = Field(default=None, min_length=8, max_length=128)
     role: UserRole | None = None
     branch_id: int | None = None
+
+    _normalize_text = field_validator("full_name", mode="before")(normalize_unicode_text)
 
 
 class StaffRead(BaseModel):

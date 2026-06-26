@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../models/campaign.dart';
 import '../providers/auth_provider.dart';
+import '../services/api_service.dart';
 import '../services/campaign_service.dart';
 import '../theme/app_colors.dart';
 import '../widgets/campaign_card.dart';
@@ -119,9 +120,10 @@ class _CampaignsScreenState extends State<CampaignsScreen> {
               return CampaignCard(
                 title: campaign.title,
                 description: campaign.description,
-                date: _formatDate(campaign.createdAt),
-                tag: _targetGroupLabel(campaign.targetGroup),
-                imageUrl: campaign.imageUrl,
+                date: _campaignDateLabel(campaign),
+                tag: _campaignTag(campaign),
+                imageUrl: ApiService.resolveImageUrl(campaign.imageUrl),
+                onTap: () => _showCampaignDetails(context, campaign),
               );
             },
           ),
@@ -130,24 +132,142 @@ class _CampaignsScreenState extends State<CampaignsScreen> {
     );
   }
 
-  String _formatDate(DateTime date) {
-    final day = date.day.toString().padLeft(2, '0');
-    final month = date.month.toString().padLeft(2, '0');
-    return '$day.$month.${date.year}';
+  void _showCampaignDetails(BuildContext context, Campaign campaign) {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => _CampaignDetailsSheet(
+        campaign: campaign,
+        tag: _campaignTag(campaign),
+        dateLabel: _campaignDateLabel(campaign),
+      ),
+    );
   }
+}
 
-  String _targetGroupLabel(String targetGroup) {
-    switch (targetGroup) {
-      case 'inactive_clients':
-        return 'Для гостей';
-      case 'birthday_clients':
-        return 'День рождения';
-      case 'vip_clients':
-        return 'VIP';
-      case 'all_clients':
-      default:
-        return 'Акция';
-    }
+class _CampaignDetailsSheet extends StatelessWidget {
+  const _CampaignDetailsSheet({
+    required this.campaign,
+    required this.tag,
+    required this.dateLabel,
+  });
+
+  final Campaign campaign;
+  final String tag;
+  final String dateLabel;
+
+  @override
+  Widget build(BuildContext context) {
+    final imageUrl = ApiService.resolveImageUrl(campaign.imageUrl);
+    final description = campaign.description.trim();
+
+    return DraggableScrollableSheet(
+      initialChildSize: 0.68,
+      minChildSize: 0.44,
+      maxChildSize: 0.92,
+      builder: (context, scrollController) {
+        return Container(
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+          ),
+          child: ListView(
+            controller: scrollController,
+            padding: const EdgeInsets.fromLTRB(18, 12, 18, 30),
+            children: [
+              Center(
+                child: Container(
+                  width: 44,
+                  height: 5,
+                  decoration: BoxDecoration(
+                    color: AppColors.border,
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 18),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(24),
+                child: AspectRatio(
+                  aspectRatio: 1.35,
+                  child: imageUrl.isEmpty
+                      ? Container(
+                          color: AppColors.card,
+                          child: const Icon(
+                            Icons.campaign_rounded,
+                            size: 76,
+                            color: AppColors.textPrimary,
+                          ),
+                        )
+                      : Image.network(
+                          imageUrl,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => Container(
+                            color: AppColors.card,
+                            child: const Icon(
+                              Icons.campaign_rounded,
+                              size: 76,
+                              color: AppColors.textPrimary,
+                            ),
+                          ),
+                        ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                  decoration: BoxDecoration(
+                    color: AppColors.accent,
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                  child: Text(
+                    tag,
+                    style: const TextStyle(
+                      color: AppColors.textPrimary,
+                      fontWeight: FontWeight.w800,
+                      fontSize: 12,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 14),
+              Text(campaign.title, style: Theme.of(context).textTheme.headlineMedium),
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  const Icon(Icons.calendar_today_rounded, size: 18, color: AppColors.textSecondary),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      dateLabel,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            color: AppColors.textSecondary,
+                            fontWeight: FontWeight.w700,
+                          ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+              Text('Описание', style: Theme.of(context).textTheme.titleMedium),
+              const SizedBox(height: 8),
+              Text(
+                description.isEmpty
+                    ? 'Подробности появятся скоро.'
+                    : description,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      height: 1.45,
+                      color: AppColors.textSecondary,
+                    ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 }
 
@@ -162,7 +282,7 @@ class _CampaignsHeader extends StatelessWidget {
         Text('Афиши', style: Theme.of(context).textTheme.headlineMedium),
         const SizedBox(height: 6),
         Text(
-          'Акции, события и специальные предложения Alefun Pub',
+          'События и специальные предложения Alefun Pub',
           style: Theme.of(context).textTheme.bodyMedium,
         ),
       ],
@@ -246,4 +366,44 @@ class _CampaignsError extends StatelessWidget {
       ],
     );
   }
+}
+
+String _campaignTag(Campaign campaign) {
+  final title = campaign.title.toLowerCase();
+  if (title.contains('ночь') ||
+      title.contains('вечер') ||
+      title.contains('музык') ||
+      title.contains('концерт') ||
+      title.contains('дискот')) {
+    return 'Событие';
+  }
+  switch (campaign.targetGroup) {
+    case 'inactive_clients':
+      return 'Для гостей';
+    case 'birthday_clients':
+      return 'День рождения';
+    case 'vip_clients':
+      return 'VIP';
+    case 'all_clients':
+    default:
+      return 'Афиша';
+  }
+}
+
+String _campaignDateLabel(Campaign campaign) {
+  final startDate = campaign.startDate;
+  final endDate = campaign.endDate;
+  if (startDate != null && endDate != null) {
+    return '${_formatDate(startDate)} - ${_formatDate(endDate)}';
+  }
+  if (startDate != null) {
+    return _formatDate(startDate);
+  }
+  return _formatDate(campaign.createdAt);
+}
+
+String _formatDate(DateTime date) {
+  final day = date.day.toString().padLeft(2, '0');
+  final month = date.month.toString().padLeft(2, '0');
+  return '$day.$month.${date.year}';
 }

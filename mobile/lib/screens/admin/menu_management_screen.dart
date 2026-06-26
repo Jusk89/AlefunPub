@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../../models/menu_category.dart';
 import '../../models/menu_item.dart';
@@ -20,13 +21,13 @@ class MenuManagementScreen extends StatefulWidget {
 class _MenuManagementScreenState extends State<MenuManagementScreen> {
   final _menuService = MenuService();
   final _uploadService = UploadService();
+  final _imagePicker = ImagePicker();
   final _categoryNameController = TextEditingController();
   final _categorySortController = TextEditingController(text: '0');
   final _dishNameController = TextEditingController();
   final _dishDescriptionController = TextEditingController();
   final _dishPriceController = TextEditingController();
   final _imageUrlController = TextEditingController();
-  final _imagePathController = TextEditingController();
 
   List<MenuCategory> _categories = [];
   List<MenuItem> _items = [];
@@ -54,7 +55,6 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
     _dishDescriptionController.dispose();
     _dishPriceController.dispose();
     _imageUrlController.dispose();
-    _imagePathController.dispose();
     super.dispose();
   }
 
@@ -200,9 +200,11 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
   }
 
   Future<void> _uploadDishImage() async {
-    final path = _imagePathController.text.trim();
-    if (path.isEmpty) {
-      setState(() => _errorMessage = 'Введите путь к файлу изображения.');
+    final image = await _imagePicker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 88,
+    );
+    if (image == null) {
       return;
     }
 
@@ -212,7 +214,10 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
     });
 
     try {
-      final imageUrl = await _uploadService.uploadImage(filePath: path, folder: 'menu');
+      final imageUrl = await _uploadService.uploadPickedImage(
+        image: image,
+        folder: 'menu',
+      );
       if (!mounted) {
         return;
       }
@@ -263,7 +268,6 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
       _dishDescriptionController.clear();
       _dishPriceController.clear();
       _imageUrlController.clear();
-      _imagePathController.clear();
       _itemAvailable = true;
     });
   }
@@ -357,15 +361,13 @@ class _MenuManagementScreenState extends State<MenuManagementScreen> {
             child: Column(
               children: [
                 _ImagePreview(imageUrl: _imageUrlController.text),
-                const SizedBox(height: 12),
-                _AdminInput(controller: _imagePathController, label: 'Путь к файлу для загрузки', icon: Icons.folder_open_rounded),
                 const SizedBox(height: 10),
                 OutlinedButton.icon(
                   onPressed: _isUploading ? null : _uploadDishImage,
                   icon: _isUploading
                       ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
-                      : const Icon(Icons.upload_rounded),
-                  label: const Text('ЗАГРУЗИТЬ ИЗОБРАЖЕНИЕ'),
+                      : const Icon(Icons.photo_library_rounded),
+                  label: const Text('ВЫБРАТЬ ФОТО'),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: AppColors.textPrimary,
                     minimumSize: const Size.fromHeight(48),

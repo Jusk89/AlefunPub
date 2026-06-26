@@ -10,6 +10,7 @@ class CampaignCard extends StatelessWidget {
     required this.date,
     required this.tag,
     this.imageUrl,
+    this.onTap,
   });
 
   final String title;
@@ -17,66 +18,66 @@ class CampaignCard extends StatelessWidget {
   final String date;
   final String tag;
   final String? imageUrl;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(28),
+      child: InkWell(
+        onTap: onTap,
         borderRadius: BorderRadius.circular(28),
-        border: Border.all(color: AppColors.border),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.055),
-            blurRadius: 22,
-            offset: const Offset(0, 12),
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(28),
+            border: Border.all(color: AppColors.border),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.055),
+                blurRadius: 22,
+                offset: const Offset(0, 12),
+              ),
+            ],
           ),
-        ],
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _CampaignImage(imageUrl: imageUrl, tag: tag),
-          Padding(
-            padding: const EdgeInsets.all(18),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(title, style: Theme.of(context).textTheme.titleLarge),
-                const SizedBox(height: 8),
-                Text(
-                  description,
-                  style: Theme.of(context).textTheme.bodyMedium,
-                ),
-                const SizedBox(height: 16),
-                Row(
+          clipBehavior: Clip.antiAlias,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _CampaignImage(imageUrl: imageUrl, tag: tag),
+              Padding(
+                padding: const EdgeInsets.all(18),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Icon(Icons.calendar_today_rounded, size: 17, color: AppColors.textSecondary),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        date,
-                        style: Theme.of(context).textTheme.labelMedium,
-                      ),
+                    Text(title, style: Theme.of(context).textTheme.titleLarge),
+                    const SizedBox(height: 8),
+                    Text(
+                      description,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.bodyMedium,
                     ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
-                      decoration: BoxDecoration(
-                        color: AppColors.accentSoft,
-                        borderRadius: BorderRadius.circular(999),
-                      ),
-                      child: const Text(
-                        'Подробнее',
-                        style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12),
-                      ),
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        const Icon(Icons.calendar_today_rounded, size: 17, color: AppColors.textSecondary),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            date,
+                            style: Theme.of(context).textTheme.labelMedium,
+                          ),
+                        ),
+                        const Icon(Icons.chevron_right_rounded, color: AppColors.textSecondary),
+                      ],
                     ),
                   ],
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
@@ -157,7 +158,7 @@ class _CampaignPlaceholder extends StatelessWidget {
               width: 132,
               height: 132,
               decoration: BoxDecoration(
-                color: AppColors.accent.withOpacity(0.55),
+                color: AppColors.accent.withValues(alpha: 0.55),
                 borderRadius: BorderRadius.circular(80),
               ),
             ),

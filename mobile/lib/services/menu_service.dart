@@ -6,11 +6,6 @@ class MenuService {
   MenuService({ApiService? apiService})
       : _apiService = apiService ?? ApiService();
 
-  static const int defaultRestaurantId = int.fromEnvironment(
-    'RESTAURANT_ID',
-    defaultValue: 1,
-  );
-
   final ApiService _apiService;
 
   Future<List<MenuCategory>> getCategories() async {
@@ -27,14 +22,12 @@ class MenuService {
 
   Future<MenuCategory> createCategory({
     required String name,
-    int restaurantId = defaultRestaurantId,
     int sortOrder = 0,
     bool isActive = true,
   }) async {
     final response = await _apiService.post(
       '/menu/categories',
       data: {
-        'restaurant_id': restaurantId,
         'name': name.trim(),
         'sort_order': sortOrder,
         'is_active': isActive,
@@ -47,7 +40,6 @@ class MenuService {
   Future<MenuCategory> updateCategory(
     int id, {
     required String name,
-    int? restaurantId,
     int? sortOrder,
     bool? isActive,
   }) async {
@@ -55,7 +47,6 @@ class MenuService {
       '/menu/categories/$id',
       data: {
         'name': name.trim(),
-        if (restaurantId != null) 'restaurant_id': restaurantId,
         if (sortOrder != null) 'sort_order': sortOrder,
         if (isActive != null) 'is_active': isActive,
       },
@@ -93,13 +84,11 @@ class MenuService {
     required double price,
     String? description,
     String? imageUrl,
-    int restaurantId = defaultRestaurantId,
     bool isAvailable = true,
   }) async {
     final response = await _apiService.post(
       '/menu/items',
       data: {
-        'restaurant_id': restaurantId,
         'category_id': categoryId,
         'name': name.trim(),
         'description': description?.trim(),
@@ -118,13 +107,11 @@ class MenuService {
     required double price,
     String? description,
     String? imageUrl,
-    int restaurantId = defaultRestaurantId,
     bool? isAvailable,
   }) async {
     final response = await _apiService.patch(
       '/menu/items/$id',
       data: {
-        'restaurant_id': restaurantId,
         'category_id': categoryId,
         'name': name.trim(),
         'description': description?.trim(),

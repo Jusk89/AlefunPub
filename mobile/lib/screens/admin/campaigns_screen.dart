@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../../models/campaign.dart';
 import '../../providers/auth_provider.dart';
@@ -19,10 +20,10 @@ class AdminCampaignsScreen extends StatefulWidget {
 class _AdminCampaignsScreenState extends State<AdminCampaignsScreen> {
   final _campaignService = CampaignService();
   final _uploadService = UploadService();
+  final _imagePicker = ImagePicker();
   final _titleController = TextEditingController();
   final _descriptionController = TextEditingController();
   final _imageUrlController = TextEditingController();
-  final _imagePathController = TextEditingController();
   final _startDateController = TextEditingController();
   final _endDateController = TextEditingController();
 
@@ -46,7 +47,6 @@ class _AdminCampaignsScreenState extends State<AdminCampaignsScreen> {
     _titleController.dispose();
     _descriptionController.dispose();
     _imageUrlController.dispose();
-    _imagePathController.dispose();
     _startDateController.dispose();
     _endDateController.dispose();
     super.dispose();
@@ -134,9 +134,11 @@ class _AdminCampaignsScreenState extends State<AdminCampaignsScreen> {
   }
 
   Future<void> _uploadImage() async {
-    final path = _imagePathController.text.trim();
-    if (path.isEmpty) {
-      setState(() => _errorMessage = 'Введите путь к файлу изображения.');
+    final image = await _imagePicker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 88,
+    );
+    if (image == null) {
       return;
     }
 
@@ -146,7 +148,10 @@ class _AdminCampaignsScreenState extends State<AdminCampaignsScreen> {
     });
 
     try {
-      final imageUrl = await _uploadService.uploadImage(filePath: path, folder: 'campaigns');
+      final imageUrl = await _uploadService.uploadPickedImage(
+        image: image,
+        folder: 'campaigns',
+      );
       if (!mounted) {
         return;
       }
@@ -179,7 +184,6 @@ class _AdminCampaignsScreenState extends State<AdminCampaignsScreen> {
       _titleController.clear();
       _descriptionController.clear();
       _imageUrlController.clear();
-      _imagePathController.clear();
       _startDateController.clear();
       _endDateController.clear();
       _targetGroup = 'all_clients';
@@ -246,15 +250,13 @@ class _AdminCampaignsScreenState extends State<AdminCampaignsScreen> {
             child: Column(
               children: [
                 _CampaignImageBox(imageUrl: _imageUrlController.text),
-                const SizedBox(height: 14),
-                _CampaignInput(controller: _imagePathController, label: 'Путь к файлу для загрузки', icon: Icons.folder_open_rounded),
                 const SizedBox(height: 10),
                 OutlinedButton.icon(
                   onPressed: _isUploading ? null : _uploadImage,
                   icon: _isUploading
                       ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
-                      : const Icon(Icons.upload_rounded),
-                  label: const Text('ЗАГРУЗИТЬ ИЗОБРАЖЕНИЕ'),
+                      : const Icon(Icons.photo_library_rounded),
+                  label: const Text('ВЫБРАТЬ ФОТО'),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: AppColors.textPrimary,
                     minimumSize: const Size.fromHeight(48),

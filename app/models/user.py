@@ -66,5 +66,6 @@ class User(Base):
         uselist=False,
     )
     addresses: Mapped[list["Address"]] = relationship(back_populates="user", cascade="all, delete-orphan")
+    gift_redemptions: Mapped[list["GiftRedemption"]] = relationship(back_populates="user", cascade="all, delete-orphan")
     delivery_orders: Mapped[list["DeliveryOrder"]] = relationship(back_populates="courier")
     audit_logs: Mapped[list["AuditLog"]] = relationship(back_populates="actor")

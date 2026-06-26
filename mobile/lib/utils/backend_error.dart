@@ -1,6 +1,9 @@
 import 'package:dio/dio.dart';
 
 String backendErrorMessage(Object error, {String fallback = 'Ошибка запроса.'}) {
+  if (error is StateError && error.message.isNotEmpty) {
+    return error.message;
+  }
   if (error is DioException) {
     final data = error.response?.data;
     if (data is Map && data['detail'] != null) {

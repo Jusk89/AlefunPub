@@ -1,8 +1,9 @@
 from datetime import date, datetime
 
-from pydantic import BaseModel, ConfigDict, EmailStr, Field
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
 
 from app.models.user import UserRole
+from app.schemas.text import normalize_unicode_text
 
 
 class UserBase(BaseModel):
@@ -10,6 +11,8 @@ class UserBase(BaseModel):
     phone: str = Field(..., min_length=5, max_length=32)
     email: EmailStr
     birth_date: date | None = None
+
+    _normalize_text = field_validator("full_name", mode="before")(normalize_unicode_text)
 
 
 class UserCreate(UserBase):

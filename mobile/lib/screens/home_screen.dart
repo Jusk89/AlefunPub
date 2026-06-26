@@ -1,11 +1,14 @@
-import 'package:dio/dio.dart';
+﻿import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 
 import '../models/bonus_balance.dart';
+import '../models/gift.dart';
 import '../models/menu_category.dart';
 import '../models/menu_item.dart';
 import '../providers/auth_provider.dart';
+import '../services/api_service.dart';
 import '../services/bonus_service.dart';
+import '../services/gift_service.dart';
 import '../services/menu_service.dart';
 import '../theme/app_colors.dart';
 import '../widgets/menu_item_card.dart';
@@ -24,11 +27,7 @@ class HomeScreen extends StatelessWidget {
         _TopBar(),
         SizedBox(height: 18),
         _PromoBanner(),
-        SizedBox(height: 24),
-        _SectionTitle(title: 'Ваш первый подарок'),
-        SizedBox(height: 12),
-        _GiftCard(),
-        SizedBox(height: 26),
+        _GiftSection(),
         _MenuSection(),
       ],
     );
@@ -91,7 +90,7 @@ class _TopBarState extends State<_TopBar> {
                   style: Theme.of(context).textTheme.headlineMedium),
               const SizedBox(height: 4),
               Text(
-                'ул. Братьев Жубановых, 344',
+                'СѓР». Р‘СЂР°С‚СЊРµРІ Р–СѓР±Р°РЅРѕРІС‹С…, 344',
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: Theme.of(context).textTheme.bodyMedium,
@@ -233,7 +232,7 @@ class _PromoBanner extends StatelessWidget {
             children: [
               const Spacer(),
               const Text(
-                'Соберите\nвечер в Alefun',
+                'РЎРѕР±РµСЂРёС‚Рµ\nРІРµС‡РµСЂ РІ Alefun',
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: 34,
@@ -243,7 +242,7 @@ class _PromoBanner extends StatelessWidget {
               ),
               const SizedBox(height: 12),
               Text(
-                'Закуски, напитки и горячие блюда для компании',
+                'Р—Р°РєСѓСЃРєРё, РЅР°РїРёС‚РєРё Рё РіРѕСЂСЏС‡РёРµ Р±Р»СЋРґР° РґР»СЏ РєРѕРјРїР°РЅРёРё',
                 style: TextStyle(
                   color: Colors.white.withValues(alpha: 0.78),
                   fontSize: 15,
@@ -258,59 +257,212 @@ class _PromoBanner extends StatelessWidget {
   }
 }
 
-class _GiftCard extends StatelessWidget {
-  const _GiftCard();
+class _GiftSection extends StatefulWidget {
+  const _GiftSection();
+
+  @override
+  State<_GiftSection> createState() => _GiftSectionState();
+}
+
+class _GiftSectionState extends State<_GiftSection> {
+  final _giftService = GiftService();
+
+  late Future<List<Gift>> _giftsFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _giftsFuture = _giftService.getMyUnusedGifts();
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
+    return FutureBuilder<List<Gift>>(
+      future: _giftsFuture,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState != ConnectionState.done) {
+          return const SizedBox(height: 24);
+        }
+
+        final gifts = snapshot.data ?? [];
+        if (snapshot.hasError || gifts.isEmpty) {
+          return const SizedBox.shrink();
+        }
+
+        final gift = gifts.first;
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const SizedBox(height: 24),
+            const _SectionTitle(title: 'Р’Р°С€ РїРѕРґР°СЂРѕРє'),
+            const SizedBox(height: 12),
+            _GiftCard(gift: gift),
+            const SizedBox(height: 26),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _GiftCard extends StatelessWidget {
+  const _GiftCard({required this.gift});
+
+  final Gift gift;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(24),
+      child: InkWell(
+        onTap: () => _showGiftDetails(context, gift),
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: AppColors.border),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 18,
-            offset: const Offset(0, 10),
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(color: AppColors.border),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.05),
+                blurRadius: 18,
+                offset: const Offset(0, 10),
+              ),
+            ],
           ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 72,
-            height: 72,
-            decoration: BoxDecoration(
-              color: AppColors.accentSoft,
-              borderRadius: BorderRadius.circular(22),
-            ),
-            child: const Icon(
-              Icons.card_giftcard_rounded,
-              color: AppColors.textPrimary,
-              size: 34,
-            ),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Добро пожаловать',
-                    style: Theme.of(context).textTheme.titleMedium),
-                const SizedBox(height: 5),
-                Text(
-                  'Получите подарок после первого заказа',
-                  style: Theme.of(context).textTheme.bodyMedium,
+          child: Row(
+            children: [
+              _GiftThumb(imageUrl: gift.imageUrl),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(gift.title, style: Theme.of(context).textTheme.titleMedium),
+                    const SizedBox(height: 5),
+                    Text(
+                      gift.description,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.bodyMedium,
+                    ),
+                  ],
                 ),
-              ],
-            ),
+              ),
+              const Icon(Icons.chevron_right_rounded, color: AppColors.textSecondary),
+            ],
           ),
-          const Icon(Icons.chevron_right_rounded,
-              color: AppColors.textSecondary),
-        ],
+        ),
       ),
+    );
+  }
+
+  void _showGiftDetails(BuildContext context, Gift gift) {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => _GiftDetailsSheet(gift: gift),
+    );
+  }
+}
+
+class _GiftThumb extends StatelessWidget {
+  const _GiftThumb({required this.imageUrl});
+
+  final String? imageUrl;
+
+  @override
+  Widget build(BuildContext context) {
+    final resolved = ApiService.resolveImageUrl(imageUrl);
+    return Container(
+      width: 72,
+      height: 72,
+      clipBehavior: Clip.antiAlias,
+      decoration: BoxDecoration(
+        color: AppColors.accentSoft,
+        borderRadius: BorderRadius.circular(22),
+      ),
+      child: resolved.isEmpty
+          ? const Icon(Icons.card_giftcard_rounded, color: AppColors.textPrimary, size: 34)
+          : Image.network(
+              resolved,
+              fit: BoxFit.cover,
+              errorBuilder: (_, __, ___) => const Icon(Icons.card_giftcard_rounded),
+            ),
+    );
+  }
+}
+
+class _GiftDetailsSheet extends StatelessWidget {
+  const _GiftDetailsSheet({required this.gift});
+
+  final Gift gift;
+
+  @override
+  Widget build(BuildContext context) {
+    final imageUrl = ApiService.resolveImageUrl(gift.imageUrl);
+    return DraggableScrollableSheet(
+      initialChildSize: 0.58,
+      minChildSize: 0.38,
+      maxChildSize: 0.86,
+      builder: (context, scrollController) {
+        return Container(
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+          ),
+          child: ListView(
+            controller: scrollController,
+            padding: const EdgeInsets.fromLTRB(18, 12, 18, 30),
+            children: [
+              Center(
+                child: Container(
+                  width: 44,
+                  height: 5,
+                  decoration: BoxDecoration(
+                    color: AppColors.border,
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 18),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(24),
+                child: AspectRatio(
+                  aspectRatio: 1.35,
+                  child: imageUrl.isEmpty
+                      ? Container(
+                          color: AppColors.card,
+                          child: const Icon(Icons.card_giftcard_rounded, size: 76),
+                        )
+                      : Image.network(
+                          imageUrl,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => Container(
+                            color: AppColors.card,
+                            child: const Icon(Icons.card_giftcard_rounded, size: 76),
+                          ),
+                        ),
+                ),
+              ),
+              const SizedBox(height: 18),
+              Text(gift.title, style: Theme.of(context).textTheme.headlineMedium),
+              const SizedBox(height: 14),
+              Text('РћРїРёСЃР°РЅРёРµ', style: Theme.of(context).textTheme.titleMedium),
+              const SizedBox(height: 8),
+              Text(
+                gift.description,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      height: 1.45,
+                      color: AppColors.textSecondary,
+                    ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }
@@ -391,7 +543,7 @@ class _MenuSectionState extends State<_MenuSection> {
         );
         return;
       }
-      setState(() => _errorMessage = 'Не удалось загрузить меню');
+      setState(() => _errorMessage = 'РќРµ СѓРґР°Р»РѕСЃСЊ Р·Р°РіСЂСѓР·РёС‚СЊ РјРµРЅСЋ');
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);
@@ -420,7 +572,7 @@ class _MenuSectionState extends State<_MenuSection> {
       if (!mounted) {
         return;
       }
-      setState(() => _errorMessage = 'Не удалось загрузить блюда');
+      setState(() => _errorMessage = 'РќРµ СѓРґР°Р»РѕСЃСЊ Р·Р°РіСЂСѓР·РёС‚СЊ Р±Р»СЋРґР°');
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);
@@ -433,7 +585,7 @@ class _MenuSectionState extends State<_MenuSection> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const _SectionTitle(title: 'Меню'),
+        const _SectionTitle(title: 'РњРµРЅСЋ'),
         const SizedBox(height: 14),
         if (_categories.isNotEmpty)
           _CategoryChips(
@@ -528,10 +680,119 @@ class _MenuGrid extends StatelessWidget {
           name: item.name,
           pricePoints: item.price,
           imageUrl: item.imageUrl,
+          onTap: () => _showMenuItemDetails(context, item),
         );
       },
     );
   }
+
+  void _showMenuItemDetails(BuildContext context, MenuItem item) {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => _MenuItemDetailsSheet(item: item),
+    );
+  }
+}
+
+class _MenuItemDetailsSheet extends StatelessWidget {
+  const _MenuItemDetailsSheet({required this.item});
+
+  final MenuItem item;
+
+  @override
+  Widget build(BuildContext context) {
+    final imageUrl = ApiService.resolveImageUrl(item.imageUrl);
+    final description = item.description?.trim();
+
+    return DraggableScrollableSheet(
+      initialChildSize: 0.62,
+      minChildSize: 0.42,
+      maxChildSize: 0.9,
+      builder: (context, scrollController) {
+        return Container(
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+          ),
+          child: ListView(
+            controller: scrollController,
+            padding: const EdgeInsets.fromLTRB(18, 12, 18, 28),
+            children: [
+              Center(
+                child: Container(
+                  width: 44,
+                  height: 5,
+                  decoration: BoxDecoration(
+                    color: AppColors.border,
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 18),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(24),
+                child: AspectRatio(
+                  aspectRatio: 1.35,
+                  child: imageUrl.isEmpty
+                      ? Container(
+                          color: AppColors.card,
+                          child: const Icon(
+                            Icons.restaurant_menu_rounded,
+                            size: 72,
+                            color: AppColors.textPrimary,
+                          ),
+                        )
+                      : Image.network(
+                          imageUrl,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => Container(
+                            color: AppColors.card,
+                            child: const Icon(
+                              Icons.restaurant_menu_rounded,
+                              size: 72,
+                              color: AppColors.textPrimary,
+                            ),
+                          ),
+                        ),
+                ),
+              ),
+              const SizedBox(height: 18),
+              Text(item.name, style: Theme.of(context).textTheme.headlineMedium),
+              const SizedBox(height: 8),
+              Text(
+                '${_formatMenuPrice(item.price)} С‚Рі',
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      color: AppColors.textPrimary,
+                      fontWeight: FontWeight.w800,
+                    ),
+              ),
+              const SizedBox(height: 18),
+              Text('РћРїРёСЃР°РЅРёРµ', style: Theme.of(context).textTheme.titleMedium),
+              const SizedBox(height: 8),
+              Text(
+                description == null || description.isEmpty
+                    ? 'РћРїРёСЃР°РЅРёРµ Рё СЃРѕСЃС‚Р°РІ Р±Р»СЋРґР° СЃРєРѕСЂРѕ РїРѕСЏРІСЏС‚СЃСЏ.'
+                    : description,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      height: 1.45,
+                      color: AppColors.textSecondary,
+                    ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+String _formatMenuPrice(double value) {
+  if (value == value.roundToDouble()) {
+    return value.round().toString();
+  }
+  return value.toStringAsFixed(2);
 }
 
 class _MenuLoading extends StatelessWidget {
@@ -579,7 +840,7 @@ class _MenuError extends StatelessWidget {
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16)),
             ),
-            child: const Text('Повторить'),
+            child: const Text('РџРѕРІС‚РѕСЂРёС‚СЊ'),
           ),
         ],
       ),
@@ -600,7 +861,7 @@ class _MenuEmpty extends StatelessWidget {
         borderRadius: BorderRadius.circular(22),
       ),
       child: const Text(
-        'Меню пусто',
+        'РњРµРЅСЋ РїСѓСЃС‚Рѕ',
         textAlign: TextAlign.center,
         style: TextStyle(fontWeight: FontWeight.w700),
       ),

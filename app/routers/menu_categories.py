@@ -5,7 +5,6 @@ from app.database import get_db
 from app.dependencies import require_admin_or_owner
 from app.models.audit import AuditAction
 from app.models.menu import MenuCategory
-from app.models.restaurant import Restaurant
 from app.schemas.menu import MenuCategoryCreate, MenuCategoryRead, MenuCategoryUpdate
 from app.models.user import User
 from app.services.audit import AuditService
@@ -33,7 +32,6 @@ def create_menu_category(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_admin_or_owner),
 ) -> MenuCategory:
-    get_record_or_404(db, Restaurant, payload.restaurant_id, "Restaurant not found")
     category = create_record(db, MenuCategory, payload)
     AuditService(db, auto_commit=True).write_log(
         AuditAction.menu_category_created,
@@ -57,8 +55,6 @@ def update_menu_category(
     current_user: User = Depends(require_admin_or_owner),
 ) -> MenuCategory:
     category = get_category_or_404(db, category_id)
-    if payload.restaurant_id is not None:
-        get_record_or_404(db, Restaurant, payload.restaurant_id, "Restaurant not found")
     category = update_record(db, category, payload)
     AuditService(db, auto_commit=True).write_log(
         AuditAction.menu_category_updated,

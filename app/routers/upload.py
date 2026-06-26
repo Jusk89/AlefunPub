@@ -10,7 +10,7 @@ from app.models.user import User
 router = APIRouter(prefix="/upload", tags=["upload"])
 
 UPLOAD_ROOT = Path("uploads")
-ALLOWED_FOLDERS = {"menu", "campaigns", "logos"}
+ALLOWED_FOLDERS = {"menu", "campaigns", "gifts", "logos"}
 ALLOWED_EXTENSIONS = {".jpg", ".jpeg", ".png", ".webp"}
 
 
@@ -25,7 +25,7 @@ def upload_image(
     if normalized_folder not in ALLOWED_FOLDERS:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Folder must be one of: menu, campaigns, logos",
+            detail="Folder must be one of: menu, campaigns, gifts, logos",
         )
 
     extension = Path(file.filename or "").suffix.lower()

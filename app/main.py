@@ -11,6 +11,7 @@ from app.routers import (
     bonuses,
     branches,
     campaigns,
+    gifts,
     menu_categories,
     menu_items,
     notifications,
@@ -36,6 +37,7 @@ app.include_router(menu_categories.router)
 app.include_router(menu_items.router)
 app.include_router(bonuses.router)
 app.include_router(campaigns.router)
+app.include_router(gifts.router)
 app.include_router(notifications.router)
 app.include_router(orders.router)
 app.include_router(activity.router)

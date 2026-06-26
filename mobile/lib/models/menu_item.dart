@@ -1,7 +1,6 @@
 class MenuItem {
   const MenuItem({
     required this.id,
-    required this.restaurantId,
     required this.categoryId,
     required this.name,
     required this.price,
@@ -11,7 +10,6 @@ class MenuItem {
   });
 
   final int id;
-  final int restaurantId;
   final int categoryId;
   final String name;
   final String? description;
@@ -22,7 +20,6 @@ class MenuItem {
   factory MenuItem.fromJson(Map<String, dynamic> json) {
     return MenuItem(
       id: json['id'] as int,
-      restaurantId: json['restaurant_id'] as int? ?? 1,
       categoryId: json['category_id'] as int? ?? 0,
       name: json['name'] as String? ?? '',
       description: json['description'] as String?,

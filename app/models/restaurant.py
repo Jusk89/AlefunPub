@@ -20,14 +20,6 @@ class Restaurant(Base):
         back_populates="restaurant",
         cascade="all, delete-orphan",
     )
-    menu_categories: Mapped[list["MenuCategory"]] = relationship(
-        back_populates="restaurant",
-        cascade="all, delete-orphan",
-    )
-    menu_items: Mapped[list["MenuItem"]] = relationship(
-        back_populates="restaurant",
-        cascade="all, delete-orphan",
-    )
     orders: Mapped[list["Order"]] = relationship(back_populates="restaurant")
     bonus_accounts: Mapped[list["BonusAccount"]] = relationship(
         back_populates="restaurant",
